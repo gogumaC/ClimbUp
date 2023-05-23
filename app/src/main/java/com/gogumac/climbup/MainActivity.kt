@@ -5,6 +5,7 @@ import android.util.Log
 import android.widget.CalendarView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -33,6 +35,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -117,8 +120,11 @@ class MainActivity : ComponentActivity() {
                 Text(stringResource(R.string.home1))
                 Text("00"+stringResource(R.string.home2))
                 Text("00"+stringResource(R.string.home3))
-                Row() {
-                    Text(stringResource(R.string.home4))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(stringResource(R.string.home4),modifier=Modifier.padding(end=10.dp))
+                    LevelIcon(modifier=Modifier.size(18.dp))
                 }
                 ElevatedButton(
                     onClick = { /*TODO*/ },
@@ -205,7 +211,17 @@ class MainActivity : ComponentActivity() {
         }
 
     }
-    
+
+    @Composable
+    fun LevelIcon(modifier: Modifier=Modifier){
+        Canvas(
+            modifier=modifier
+        ){
+            drawCircle(
+                color= Color.Cyan,
+            )
+        }
+    }
 
     @Preview
     @Composable
