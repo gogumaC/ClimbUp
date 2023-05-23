@@ -1,6 +1,8 @@
 package com.gogumac.climbup
 
 import android.os.Bundle
+import android.util.Log
+import android.widget.CalendarView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -24,7 +26,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.gogumac.climbup.ui.theme.ClimbUpTheme
+import java.util.Date
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,12 +42,17 @@ class MainActivity : ComponentActivity() {
     fun ClimbUpApp(modifier: Modifier=Modifier){
         ClimbUpTheme {
             // A surface container using the 'background' color from the theme
+
+            val onDateChanged:(CalendarView,Int,Int,Int)->Unit={view,year,month,dayOfWeek->
+                Log.d("checkcheck","$year $month $dayOfWeek")
+            }
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
             ) {
-                Row(){
+                Column() {
                     Summary()
+                    ClimbupCalendar(onDateChanged=onDateChanged)
                 }
 
 
@@ -56,12 +65,15 @@ class MainActivity : ComponentActivity() {
         modifier: Modifier=Modifier,
         content: @Composable ()->Unit
     ){
+        val dateUpdated={views:CalendarView->
+            views.date
+        }
         Card(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(15.dp),
+                .padding(top=15.dp, start = 15.dp,end=15.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = MaterialTheme.colorScheme.primaryContainer
             ),
         ){
             content.invoke()
@@ -90,7 +102,20 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    
+    @Composable
+    fun ClimbupCalendar(modifier: Modifier=Modifier,onDateChanged:(CalendarView,Int,Int,Int)->Unit){
+        BasicCard(modifier=modifier.fillMaxWidth()) {
+            AndroidView(
+                { CalendarView(it) },
+                modifier=modifier.fillMaxWidth(),
+                update={views->
+                    views.setOnDateChangeListener { view, year, month, dayOfMonth -> onDateChanged(view,year,month,dayOfMonth) }
+
+                }
+
+            )
+        }
+    }
 
 
 
