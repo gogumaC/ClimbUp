@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">ClimbUp</string>
+    <string name="home1">이번 달에는</string>
+    <string name="home2">번 클라이밍을 했어요🧗‍</string>
+    <string name="home3">번 완등했어요🙌</string>
+    <string name="home4">가장 많이 시도한 레벨</string>
+    <string name="records_today_climbing">오늘의 클라이밍 기록하기</string>
+    <string name="detail">자세히</string>
 </resources>
