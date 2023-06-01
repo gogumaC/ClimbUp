@@ -23,6 +23,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -32,6 +34,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -137,6 +140,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun ClimbupCalendar(
         modifier: Modifier=Modifier,
@@ -147,6 +151,7 @@ class MainActivity : ComponentActivity() {
                 .fillMaxWidth()
                 .padding(top = 15.dp, start = 15.dp, end = 15.dp)
         ) {
+
             AndroidView(
                 { CalendarView(it) },
                 modifier=modifier.fillMaxWidth(),
@@ -156,6 +161,11 @@ class MainActivity : ComponentActivity() {
                 }
 
             )
+//            val state= rememberDatePickerState(initialDisplayMode = DisplayMode.Picker)
+//            DatePicker(
+//                state=state,
+//                modifier=Modifier.padding(16.dp)
+//            )
         }
     }
 
