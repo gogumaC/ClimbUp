@@ -12,7 +12,7 @@ class Converters {
     @TypeConverter
     fun fromTimestamp(timestamp:Long?):LocalDateTime?{
         timestamp?.let {
-            return LocalDateTime.ofInstant(Instant.ofEpochSecond(timestamp),TimeZone.getDefault().toZoneId())
+            return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp),TimeZone.getDefault().toZoneId())
         }
         return null
     }
