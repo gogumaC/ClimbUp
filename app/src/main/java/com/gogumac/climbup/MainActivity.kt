@@ -5,6 +5,8 @@ import android.util.Log
 import android.widget.CalendarView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,6 +38,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,10 +48,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.gogumac.climbup.room.ClimbingRecord
 import com.gogumac.climbup.ui.theme.ClimbUpTheme
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.Date
 
+
 class MainActivity : ComponentActivity() {
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -56,12 +67,18 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun ClimbUpApp(modifier: Modifier=Modifier){
+    fun ClimbUpApp(
+        modifier: Modifier=Modifier,
+        climbingRecViewModel:ClimbingRecordViewModel = viewModel()
+    ){
+        val monthUiState by climbingRecViewModel.monthUiState.collectAsState()
+        val dayUiState by climbingRecViewModel.dayUiState.collectAsState()
         //var year by rememberSaveable { mutableStateOf<Int>(0) }
         ClimbUpTheme {
             // A surface container using the 'background' color from the theme
+
             val onDateChanged:(CalendarView,Int,Int,Int)->Unit={view,year,month,dayOfWeek->
-                Log.d("checkcheck","$year $month $dayOfWeek")
+                climbingRecViewModel.getDayRecords(year,month,dayOfWeek)
             }
             Surface(
                 modifier = Modifier.fillMaxSize(),
@@ -86,7 +103,10 @@ class MainActivity : ComponentActivity() {
                     Column(modifier=Modifier.padding(paddingValues)) {
                         Summary()
                         ClimbupCalendar(onDateChanged=onDateChanged)
-                        ClimbingRecord(date = Date(), records = List<String>(20){"LV.${it+1}"})
+                        if(!dayUiState.isEmpty){
+                            ClimbingRecord(date = dayUiState.date, records = dayUiState.records)
+                        }
+
                     }
                 }
 
@@ -130,7 +150,7 @@ class MainActivity : ComponentActivity() {
                     LevelIcon(modifier=Modifier.size(18.dp))
                 }
                 ElevatedButton(
-                    onClick = { /*TODO*/ },
+                    onClick = {  },
                     modifier=modifier.fillMaxWidth(),
                 ) {
                     Text(stringResource(R.string.records_today_climbing))
@@ -140,7 +160,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun ClimbupCalendar(
         modifier: Modifier=Modifier,
@@ -161,19 +180,14 @@ class MainActivity : ComponentActivity() {
                 }
 
             )
-//            val state= rememberDatePickerState(initialDisplayMode = DisplayMode.Picker)
-//            DatePicker(
-//                state=state,
-//                modifier=Modifier.padding(16.dp)
-//            )
         }
     }
 
     @Composable
     fun ClimbingRecord(
         modifier: Modifier=Modifier,
-        date: Date=Date(),
-        records:List<String> = listOf()
+        date: String = "0000-00-00",
+        records:List<ClimbingRecord> = listOf()
     ){
         Column(
             modifier=modifier.padding( start = 15.dp, end = 15.dp)
@@ -186,7 +200,7 @@ class MainActivity : ComponentActivity() {
 
                 ) {
                 Text(
-                    text=String.format("%tF",date),
+                    text=date,
                     modifier=Modifier.align(Alignment.Bottom)
                 )
                 TextButton(
@@ -214,7 +228,7 @@ class MainActivity : ComponentActivity() {
                 ){
                     //다른 item을 가져옴에 유의
                     items(records){record->
-                        Text(record)
+                        Text(text=record.level.text)
                     }
                 }
             }
