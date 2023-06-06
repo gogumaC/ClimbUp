@@ -10,7 +10,7 @@ import java.time.LocalDateTime
 data class ClimbingRecord(
     @PrimaryKey(autoGenerate = true) val id:Int?=null,
     val date: LocalDateTime,
-    //val level: Level,
     var videoPath:String?=null,
-    val loacation:String?=null
+    val loacation:String?=null,
+    val level:Level
 )

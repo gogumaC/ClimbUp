@@ -8,7 +8,6 @@ import java.time.LocalDateTime
 @Dao
 interface ClimbingRecordDao:BaseDao<ClimbingRecord> {
 
-
     @Query("SELECT * FROM record")
     override fun getAll(): List<ClimbingRecord>
 
