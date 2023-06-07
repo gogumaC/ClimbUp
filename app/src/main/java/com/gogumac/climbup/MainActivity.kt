@@ -9,11 +9,15 @@ import androidx.activity.viewModels
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -44,15 +48,28 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.unit.sp
 import com.gogumac.climbup.room.ClimbingRecord
 import com.gogumac.climbup.ui.theme.ClimbUpTheme
+import com.kizitonwose.calendar.compose.HorizontalCalendar
+import com.kizitonwose.calendar.compose.rememberCalendarState
+import com.kizitonwose.calendar.core.CalendarDay
+import com.kizitonwose.calendar.core.CalendarMonth
+import com.kizitonwose.calendar.core.OutDateStyle
+import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.YearMonth
+import java.time.format.TextStyle
 import java.util.Date
+import java.util.Locale
 
 
 class MainActivity : ComponentActivity() {
@@ -71,15 +88,15 @@ class MainActivity : ComponentActivity() {
         modifier: Modifier=Modifier,
         climbingRecViewModel:ClimbingRecordViewModel = viewModel()
     ){
-        val monthUiState by climbingRecViewModel.monthUiState.collectAsState()
+
         val dayUiState by climbingRecViewModel.dayUiState.collectAsState()
         //var year by rememberSaveable { mutableStateOf<Int>(0) }
         ClimbUpTheme {
             // A surface container using the 'background' color from the theme
 
-            val onDateChanged:(CalendarView,Int,Int,Int)->Unit={view,year,month,dayOfWeek->
-                climbingRecViewModel.getDayRecords(year,month,dayOfWeek)
-            }
+//            val onDateChanged:(MaterialCalendarView, CalendarDay, Boolean)->Unit={view,date,selected->
+//                climbingRecViewModel.getDayRecords(date)
+//            }
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
@@ -102,7 +119,7 @@ class MainActivity : ComponentActivity() {
                 ){paddingValues ->
                     Column(modifier=Modifier.padding(paddingValues)) {
                         Summary()
-                        ClimbupCalendar(onDateChanged=onDateChanged)
+                        ClimbupCalendar()//onDateChanged=onDateChanged)
                         if(!dayUiState.isEmpty){
                             ClimbingRecord(date = dayUiState.date, records = dayUiState.records)
                         }
@@ -121,9 +138,7 @@ class MainActivity : ComponentActivity() {
         modifier: Modifier=Modifier,
         content: @Composable ()->Unit
     ){
-        val dateUpdated={views:CalendarView->
-            views.date
-        }
+
         Card(
             modifier = modifier,
             colors = CardDefaults.cardColors(
@@ -163,23 +178,93 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun ClimbupCalendar(
         modifier: Modifier=Modifier,
-        onDateChanged:(CalendarView,Int,Int,Int)->Unit
+        //onDateChanged:(MaterialCalendarView, CalendarDay, Boolean)->Unit,
+        climbingRecViewModel:ClimbingRecordViewModel = viewModel()
     ){
+        val currentMonth = remember { YearMonth.now() }
+        val startMonth = remember { currentMonth.minusMonths(100) } // Adjust as needed
+        val endMonth = remember { currentMonth.plusMonths(100) } // Adjust as needed
+        val firstDayOfWeek = remember { firstDayOfWeekFromLocale() } // Available from the library
+
+        val state = rememberCalendarState(
+            startMonth = startMonth,
+            endMonth = endMonth,
+            firstVisibleMonth = currentMonth,
+            firstDayOfWeek = firstDayOfWeek,
+            outDateStyle = OutDateStyle.EndOfRow
+        )
+        val monthUiState by climbingRecViewModel.monthUiState.collectAsState()
         BasicCard(
             modifier= modifier
                 .fillMaxWidth()
                 .padding(top = 15.dp, start = 15.dp, end = 15.dp)
         ) {
 
-            AndroidView(
-                { CalendarView(it) },
-                modifier=modifier.fillMaxWidth(),
-                update={views->
-                    views.setOnDateChangeListener { view, year, month, dayOfMonth -> onDateChanged(view,year,month,dayOfMonth) }
+            HorizontalCalendar(
+                modifier=Modifier.padding(10.dp),
+                state=state,
+                dayContent = { Day(day=it) },
+                monthHeader =  { month ->
 
+                    val daysOfWeek = month.weekDays.first().map { it.date.dayOfWeek }
+                    MonthHeader(daysOfWeek = daysOfWeek,month=month)
                 }
-
             )
+//            AndroidView(
+//                { MaterialCalendarView(it) },
+//                modifier=modifier.fillMaxWidth(),
+//                update={views->
+//                    views.setOnDateChangedListener { widget, date, selected ->
+//                        onDateChanged(widget,date,selected) }
+//                    views.setOnMonthChangedListener { widget, date ->
+//                        climbingRecViewModel.getMonthRecords(date)
+//                    }
+//                    monthUiState.records.forEach {
+//                        //views.
+//                        Log.d("MONTH",it.toString())
+//                    }
+//                }
+//
+//            )
+        }
+    }
+
+    @Composable
+    private fun MonthHeader(month: CalendarMonth,daysOfWeek: List<DayOfWeek>) {
+        Column(
+            modifier=Modifier
+        ){
+            Text("${month.yearMonth.year}년 ${month.yearMonth.month.value}월 기록")
+            Spacer(modifier=Modifier.height(8.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("MonthHeader"),
+            ) {
+                for (dayOfWeek in daysOfWeek) {
+                    Text(
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Center,
+                        fontSize = 15.sp,
+                        text = dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+            }
+        }
+
+    }
+    @Composable
+    fun Day(
+        modifier: Modifier=Modifier,
+        day:CalendarDay,
+    ){
+        Box(
+            modifier = Modifier
+                .aspectRatio(1f), // This is important for square sizing!
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = day.date.dayOfMonth.toString())
         }
     }
 
