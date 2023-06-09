@@ -12,7 +12,7 @@ interface ClimbingRecordDao:BaseDao<ClimbingRecord> {
     override fun getAll(): List<ClimbingRecord>
 
     @Query("SELECT * FROM record WHERE date BETWEEN :monthStart AND :monthEnd")
-    fun getMonthRecords(monthStart:Long,monthEnd:Long):List<ClimbingRecord>
+    fun getMonthRecords(monthStart:LocalDateTime,monthEnd:LocalDateTime):List<ClimbingRecord>
 
     @Query("SELECT * FROM record WHERE date BETWEEN :dayStart AND :dayEnd")
     fun getDayRecords(dayStart:LocalDateTime,dayEnd:LocalDateTime):List<ClimbingRecord>
