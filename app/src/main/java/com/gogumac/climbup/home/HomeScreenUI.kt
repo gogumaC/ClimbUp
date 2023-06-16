@@ -50,10 +50,10 @@ class HomeScreenUI {
     @Composable
     fun HomeScreen(
         modifier: Modifier = Modifier,
-        climbingRecViewModel: ClimbingRecordViewModel = viewModel()
+        //climbingRecViewModel: ClimbingRecordViewModel = viewModel()
     ){
 
-        val dayUiState by climbingRecViewModel.dayUiState.collectAsState()
+        //val dayUiState by climbingRecViewModel.dayUiState.collectAsState()
         //var year by rememberSaveable { mutableStateOf<Int>(0) }
         ClimbUpTheme {
             // A surface container using the 'background' color from the theme
@@ -73,9 +73,9 @@ class HomeScreenUI {
                     Column(modifier= Modifier.padding(paddingValues)) {
                         Summary()
                         ClimbUpCalendar()//onDateChanged=onDateChanged)
-                        if(!dayUiState.isEmpty){
-                            ClimbingRecord(date = dayUiState.date, records = dayUiState.records)
-                        }
+                        //if(!dayUiState.isEmpty){
+                        //    ClimbingRecord(date = dayUiState.date, records = dayUiState.records)
+                        //}
 
                     }
                 }
@@ -144,12 +144,12 @@ class HomeScreenUI {
         }
     }
 
-    
+
     @Composable
     fun ClimbUpCalendar(
         modifier: Modifier = Modifier,
         //onDateChanged:(MaterialCalendarView, CalendarDay, Boolean)->Unit,
-        climbingRecViewModel: ClimbingRecordViewModel = viewModel()
+        //climbingRecViewModel: ClimbingRecordViewModel = viewModel()
     ){
 //        val currentMonth = remember { YearMonth.now() }
 //        val startMonth = remember { currentMonth.minusMonths(100) } // Adjust as needed
@@ -163,7 +163,7 @@ class HomeScreenUI {
 //            firstDayOfWeek = firstDayOfWeek,
 //            outDateStyle = OutDateStyle.EndOfRow
 //        )
-        val monthUiState by climbingRecViewModel.monthUiState.collectAsState()
+        //val monthUiState by climbingRecViewModel.monthUiState.collectAsState()
         BasicCard(
             modifier= modifier
                 .fillMaxWidth()
