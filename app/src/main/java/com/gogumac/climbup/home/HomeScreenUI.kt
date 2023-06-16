@@ -1,5 +1,6 @@
 package com.gogumac.climbup.home
 
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerState
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -27,6 +30,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,124 +42,157 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gogumac.climbup.ClimbingRecordViewModel
+import com.gogumac.climbup.DayUiState
+import com.gogumac.climbup.MonthUiState
 import com.gogumac.climbup.R
 import com.gogumac.climbup.room.ClimbingRecord
 import com.gogumac.climbup.ui.theme.ClimbUpTheme
+import kotlinx.coroutines.flow.StateFlow
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.util.TimeZone
 
 
-class HomeScreenUI {
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun HomeScreen(
+    climbingRecViewModel: ClimbingRecordViewModel = viewModel()
+){
+
+    val onDateSelected:(Long?)->Unit={
+        climbingRecViewModel.getDayRecords(it)
+    }
+    val onMonthChanged={}
+    HomeScreen(
+        dayUiState=climbingRecViewModel.dayUiState,
+        monthUiState = climbingRecViewModel.monthUiState,
+        onDateSelected = onDateSelected
+    )
+}
+
+@Composable
+private fun HomeScreen(
+    modifier: Modifier = Modifier,
+    dayUiState: StateFlow<DayUiState>?=null,
+    monthUiState: StateFlow<MonthUiState>?=null,
+    onDateSelected:(Long?)->Unit={},
+    onMonthChanged:(LocalDate)->Unit={}
+){
 
 
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    fun HomeScreen(
-        modifier: Modifier = Modifier,
-        //climbingRecViewModel: ClimbingRecordViewModel = viewModel()
-    ){
 
-        //val dayUiState by climbingRecViewModel.dayUiState.collectAsState()
-        //var year by rememberSaveable { mutableStateOf<Int>(0) }
-        ClimbUpTheme {
-            // A surface container using the 'background' color from the theme
+    ClimbUpTheme {
+        // A surface container using the 'background' color from the theme
 
 //            val onDateChanged:(MaterialCalendarView, CalendarDay, Boolean)->Unit={view,date,selected->
 //                climbingRecViewModel.getDayRecords(date)
 //            }
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
-            ) {
-
-                Scaffold(
-                    modifier=modifier,
-                    topBar = {HomeTopAppbar()}
-                ){paddingValues ->
-                    Column(modifier= Modifier.padding(paddingValues)) {
-                        Summary()
-                        ClimbUpCalendar()//onDateChanged=onDateChanged)
-                        //if(!dayUiState.isEmpty){
-                        //    ClimbingRecord(date = dayUiState.date, records = dayUiState.records)
-                        //}
-
-                    }
-                }
-
-
-
-            }
-        }
-    }
-
-
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    fun HomeTopAppbar(){
-        TopAppBar(
-            title={ Text(text= stringResource(id = R.string.app_name)) },
-            navigationIcon={
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null
-                )
-            }
-
-        )
-    }
-
-    @Composable
-    fun BasicCard(
-        modifier: Modifier = Modifier,
-        content: @Composable ()->Unit
-    ){
-
-        Card(
-            modifier = modifier,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            ),
-        ){
-            content.invoke()
-        }
-    }
-
-    @Composable
-    fun Summary(modifier: Modifier = Modifier){
-        BasicCard(
-            modifier=modifier.padding(top = 15.dp, start = 15.dp, end = 15.dp)
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
         ) {
-            Column(modifier = modifier.padding(10.dp)) {
-                Text(stringResource(R.string.home1))
-                Text("00"+ stringResource(R.string.home2))
-                Text("00"+ stringResource(R.string.home3))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(stringResource(R.string.home4),modifier= Modifier.padding(end=10.dp))
-                    LevelIcon(modifier= Modifier.size(18.dp))
-                }
-                ElevatedButton(
-                    onClick = {  },
-                    modifier=modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.records_today_climbing))
-                }
 
+            Scaffold(
+                modifier=modifier,
+                topBar = {HomeTopAppbar()}
+            ){paddingValues ->
+                Column(modifier= Modifier.padding(paddingValues)) {
+                    Summary()
+                    ClimbUpCalendar(
+                        onDateSelected=onDateSelected,
+                    )//onDateChanged=onDateChanged)
+                    //if(!dayUiState.isEmpty){
+                    //    ClimbingRecord(date = dayUiState.date, records = dayUiState.records)
+                    //}
+
+                }
             }
+
+
+
         }
     }
+}
 
 
-    @Composable
-    fun ClimbUpCalendar(
-        modifier: Modifier = Modifier,
-        //onDateChanged:(MaterialCalendarView, CalendarDay, Boolean)->Unit,
-        //climbingRecViewModel: ClimbingRecordViewModel = viewModel()
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HomeTopAppbar(){
+    TopAppBar(
+        title={ Text(text= stringResource(id = R.string.app_name)) },
+        navigationIcon={
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null
+            )
+        }
+
+    )
+}
+
+@Composable
+private fun BasicCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ()->Unit
+){
+
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
     ){
+        content.invoke()
+    }
+}
+
+@Composable
+private fun Summary(modifier: Modifier = Modifier){
+    BasicCard(
+        modifier=modifier.padding(top = 15.dp, start = 15.dp, end = 15.dp)
+    ) {
+        Column(modifier = modifier.padding(10.dp)) {
+            Text(stringResource(R.string.home1))
+            Text("00"+ stringResource(R.string.home2))
+            Text("00"+ stringResource(R.string.home3))
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(stringResource(R.string.home4),modifier= Modifier.padding(end=10.dp))
+                LevelIcon(modifier= Modifier.size(18.dp))
+            }
+            ElevatedButton(
+                onClick = {  },
+                modifier=modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.records_today_climbing))
+            }
+
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ClimbUpCalendar(
+    modifier: Modifier = Modifier,
+    onDateSelected:(Long?)->Unit={},
+    onMonthChanged:(LocalDate)->Unit={}
+){
 //        val currentMonth = remember { YearMonth.now() }
 //        val startMonth = remember { currentMonth.minusMonths(100) } // Adjust as needed
 //        val endMonth = remember { currentMonth.plusMonths(100) } // Adjust as needed
 //        val firstDayOfWeek = remember { firstDayOfWeekFromLocale() } // Available from the library
 //
+
+//    state.let{
+//        val test=it.selectedDateMillis
+//        Log.d("DATEDATE",LocalDateTime.ofInstant(Instant.ofEpochMilli(test!!),TimeZone.getDefault().toZoneId()).toString())
+//    }
+
 //        val state = rememberCalendarState(
 //            startMonth = startMonth,
 //            endMonth = endMonth,
@@ -163,13 +200,21 @@ class HomeScreenUI {
 //            firstDayOfWeek = firstDayOfWeek,
 //            outDateStyle = OutDateStyle.EndOfRow
 //        )
-        //val monthUiState by climbingRecViewModel.monthUiState.collectAsState()
-        BasicCard(
-            modifier= modifier
-                .fillMaxWidth()
-                .padding(top = 15.dp, start = 15.dp, end = 15.dp)
-        ) {
+    //val monthUiState by climbingRecViewModel.monthUiState.collectAsState()
+    val state = rememberDatePickerState()
+    onDateSelected(state.selectedDateMillis)
+    BasicCard(
+        modifier= modifier
+            .fillMaxWidth()
+            .padding(top = 15.dp, start = 15.dp, end = 15.dp)
+    ) {
+        DatePicker(
+            state = state,
+            showModeToggle = false,
+            headline = null,
+            title= null
 
+        )
 
 //            HorizontalCalendar(
 //                modifier= Modifier.padding(10.dp),
@@ -181,7 +226,7 @@ class HomeScreenUI {
 //                    MonthHeader(daysOfWeek = daysOfWeek,month=month)
 //                }
 //            )
-            //ㅅ----------------------------------------------------------------
+        //ㅅ----------------------------------------------------------------
 //            AndroidView(
 //                { MaterialCalendarView(it) },
 //                modifier=modifier.fillMaxWidth(),
@@ -198,8 +243,8 @@ class HomeScreenUI {
 //                }
 //
 //            )
-        }
     }
+}
 
 
 //    @Composable
@@ -244,76 +289,80 @@ class HomeScreenUI {
 //    }
 
 
-    @Composable
-    fun ClimbingRecord(
-        modifier: Modifier = Modifier,
-        date: String = "0000-00-00",
-        records:List<ClimbingRecord> = listOf()
-    ){
-        Column(
-            modifier=modifier.padding( start = 15.dp, end = 15.dp)
-        ) {
-            Row(
-                modifier= modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 5.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+@Composable
+private fun ClimbingRecord(
+    modifier: Modifier = Modifier,
+    date: String = "0000-00-00",
+    records:List<ClimbingRecord> = listOf()
+){
+    Column(
+        modifier=modifier.padding( start = 15.dp, end = 15.dp)
+    ) {
+        Row(
+            modifier= modifier
+                .fillMaxWidth()
+                .padding(bottom = 5.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
 
+        ) {
+            Text(
+                text=date,
+                modifier= Modifier.align(Alignment.Bottom)
+            )
+            TextButton(
+                modifier = modifier
+                    .wrapContentWidth()
+                    .wrapContentHeight()
+                    .align(Alignment.Bottom),
+                contentPadding= PaddingValues(),
+
+                onClick = {}
             ) {
                 Text(
-                    text=date,
-                    modifier= Modifier.align(Alignment.Bottom)
+                    stringResource(id = R.string.detail),
+                    modifier=modifier.align(Alignment.Bottom)
                 )
-                TextButton(
-                    modifier = modifier
-                        .wrapContentWidth()
-                        .wrapContentHeight()
-                        .align(Alignment.Bottom),
-                    contentPadding= PaddingValues(),
-
-                    onClick = {}
-                ) {
-                    Text(
-                        stringResource(id = R.string.detail),
-                        modifier=modifier.align(Alignment.Bottom)
-                    )
-                }
             }
-            BasicCard(
-                modifier=modifier.fillMaxWidth()
-            ) {
-                LazyVerticalGrid(
-                    modifier=modifier.padding(3.dp),
-                    columns = GridCells.Adaptive(minSize=45.dp),
-                    contentPadding= PaddingValues(horizontal=5.dp,vertical=1.dp)
-                ){
-                    //다른 item을 가져옴에 유의
-                    items(records){record->
-                        Text(text=record.level.text)
-                    }
+        }
+        BasicCard(
+            modifier=modifier.fillMaxWidth()
+        ) {
+            LazyVerticalGrid(
+                modifier=modifier.padding(3.dp),
+                columns = GridCells.Adaptive(minSize=45.dp),
+                contentPadding= PaddingValues(horizontal=5.dp,vertical=1.dp)
+            ){
+                //다른 item을 가져옴에 유의
+                items(records){record->
+                    Text(text=record.level.text)
                 }
             }
         }
-
     }
-
-
-    @Composable
-    fun LevelIcon(modifier: Modifier = Modifier){
-        Canvas(
-            modifier=modifier
-        ){
-            drawCircle(
-                color= Color.Cyan,
-            )
-        }
-    }
-
-    @Preview
-    @Composable
-    fun HomeScreenPreview(){
-        HomeScreen()
-    }
-
 
 }
+
+
+@Composable
+private fun LevelIcon(modifier: Modifier = Modifier){
+    Canvas(
+        modifier=modifier
+    ){
+        drawCircle(
+            color= Color.Cyan,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HomeScreenPreview(){
+    ClimbUpTheme(
+        dynamicColor = false
+    ) {
+        HomeScreen(modifier = Modifier)
+    }
+
+}
+
+
