@@ -54,7 +54,6 @@ import java.time.LocalDateTime
 import java.util.TimeZone
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HomeScreen(
     climbingRecViewModel: ClimbingRecordViewModel = viewModel()
@@ -63,23 +62,23 @@ internal fun HomeScreen(
     val onDateSelected:(Long?)->Unit={
         climbingRecViewModel.getDayRecords(it)
     }
-    val onMonthChanged={}
+    val onMonthChanged:(Long?)->Unit={/*TODO()*/}
     HomeScreen(
-        dayUiState=climbingRecViewModel.dayUiState,
-        monthUiState = climbingRecViewModel.monthUiState,
-        onDateSelected = onDateSelected
+        dayUiStateFlow=climbingRecViewModel.dayUiState,
+        monthUiStateFlow = climbingRecViewModel.monthUiState,
+        onDateSelected = onDateSelected,
+        onMonthChanged = onMonthChanged
     )
 }
 
 @Composable
 private fun HomeScreen(
     modifier: Modifier = Modifier,
-    dayUiState: StateFlow<DayUiState>?=null,
-    monthUiState: StateFlow<MonthUiState>?=null,
+    dayUiStateFlow: StateFlow<DayUiState>?=null,
+    monthUiStateFlow: StateFlow<MonthUiState>?=null,
     onDateSelected:(Long?)->Unit={},
-    onMonthChanged:(LocalDate)->Unit={}
+    onMonthChanged:(Long?)->Unit={}
 ){
-
 
 
     ClimbUpTheme {
@@ -101,10 +100,12 @@ private fun HomeScreen(
                     Summary()
                     ClimbUpCalendar(
                         onDateSelected=onDateSelected,
-                    )//onDateChanged=onDateChanged)
-                    //if(!dayUiState.isEmpty){
-                    //    ClimbingRecord(date = dayUiState.date, records = dayUiState.records)
-                    //}
+                        onMonthChanged = {},
+                        monthUiStateFlow=monthUiStateFlow
+                    )
+                    if(dayUiStateFlow!=null){
+                        ClimbingRecord(dayUiStateFlow = dayUiStateFlow)
+                    }
 
                 }
             }
@@ -180,27 +181,12 @@ private fun Summary(modifier: Modifier = Modifier){
 private fun ClimbUpCalendar(
     modifier: Modifier = Modifier,
     onDateSelected:(Long?)->Unit={},
-    onMonthChanged:(LocalDate)->Unit={}
+    onMonthChanged:(LocalDate)->Unit={},
+    monthUiStateFlow: StateFlow<MonthUiState>?
 ){
-//        val currentMonth = remember { YearMonth.now() }
-//        val startMonth = remember { currentMonth.minusMonths(100) } // Adjust as needed
-//        val endMonth = remember { currentMonth.plusMonths(100) } // Adjust as needed
-//        val firstDayOfWeek = remember { firstDayOfWeekFromLocale() } // Available from the library
-//
 
-//    state.let{
-//        val test=it.selectedDateMillis
-//        Log.d("DATEDATE",LocalDateTime.ofInstant(Instant.ofEpochMilli(test!!),TimeZone.getDefault().toZoneId()).toString())
-//    }
+    val monthUiState=monthUiStateFlow?.collectAsState()
 
-//        val state = rememberCalendarState(
-//            startMonth = startMonth,
-//            endMonth = endMonth,
-//            firstVisibleMonth = currentMonth,
-//            firstDayOfWeek = firstDayOfWeek,
-//            outDateStyle = OutDateStyle.EndOfRow
-//        )
-    //val monthUiState by climbingRecViewModel.monthUiState.collectAsState()
     val state = rememberDatePickerState()
     onDateSelected(state.selectedDateMillis)
     BasicCard(
@@ -216,85 +202,17 @@ private fun ClimbUpCalendar(
 
         )
 
-//            HorizontalCalendar(
-//                modifier= Modifier.padding(10.dp),
-//                state=state,
-//                dayContent = { Day(day=it) },
-//                monthHeader =  { month ->
-//
-//                    val daysOfWeek = month.weekDays.first().map { it.date.dayOfWeek }
-//                    MonthHeader(daysOfWeek = daysOfWeek,month=month)
-//                }
-//            )
-        //ㅅ----------------------------------------------------------------
-//            AndroidView(
-//                { MaterialCalendarView(it) },
-//                modifier=modifier.fillMaxWidth(),
-//                update={views->
-//                    views.setOnDateChangedListener { widget, date, selected ->
-//                        onDateChanged(widget,date,selected) }
-//                    views.setOnMonthChangedListener { widget, date ->
-//                        climbingRecViewModel.getMonthRecords(date)
-//                    }
-//                    monthUiState.records.forEach {
-//                        //views.
-//                        Log.d("MONTH",it.toString())
-//                    }
-//                }
-//
-//            )
     }
 }
-
-
-//    @Composable
-//    private fun MonthHeader(month: CalendarMonth, daysOfWeek: List<DayOfWeek>) {
-//        Column(
-//            modifier= Modifier
-//        ){
-//            Text("${month.yearMonth.year}년 ${month.yearMonth.month.value}월 기록")
-//            Spacer(modifier= Modifier.height(8.dp))
-//            Row(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .testTag("MonthHeader"),
-//            ) {
-//                for (dayOfWeek in daysOfWeek) {
-//                    Text(
-//                        modifier = Modifier.weight(1f),
-//                        textAlign = TextAlign.Center,
-//                        fontSize = 15.sp,
-//                        text = dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
-//                        fontWeight = FontWeight.Medium,
-//                    )
-//                }
-//            }
-//        }
-//
-//    }
-
-
-//    @Composable
-//    fun Day(
-//        modifier: Modifier = Modifier,
-//        day: CalendarDay,
-//    ){
-//        Box(
-//            modifier = Modifier
-//                .aspectRatio(1f), // This is important for square sizing!
-//            contentAlignment = Alignment.Center
-//        ) {
-//            Text(text = day.date.dayOfMonth.toString())
-//        }
-//    }
 
 
 @Composable
 private fun ClimbingRecord(
     modifier: Modifier = Modifier,
-    date: String = "0000-00-00",
-    records:List<ClimbingRecord> = listOf()
+    dayUiStateFlow: StateFlow<DayUiState>
 ){
+
+    val dayUiState=dayUiStateFlow.collectAsState().value
     Column(
         modifier=modifier.padding( start = 15.dp, end = 15.dp)
     ) {
@@ -306,7 +224,7 @@ private fun ClimbingRecord(
 
         ) {
             Text(
-                text=date,
+                text=dayUiState.date,
                 modifier= Modifier.align(Alignment.Bottom)
             )
             TextButton(
@@ -327,16 +245,21 @@ private fun ClimbingRecord(
         BasicCard(
             modifier=modifier.fillMaxWidth()
         ) {
-            LazyVerticalGrid(
-                modifier=modifier.padding(3.dp),
-                columns = GridCells.Adaptive(minSize=45.dp),
-                contentPadding= PaddingValues(horizontal=5.dp,vertical=1.dp)
-            ){
-                //다른 item을 가져옴에 유의
-                items(records){record->
-                    Text(text=record.level.text)
+            if(!dayUiState.isEmpty){
+                LazyVerticalGrid(
+                    modifier=modifier.padding(3.dp),
+                    columns = GridCells.Adaptive(minSize=45.dp),
+                    contentPadding= PaddingValues(horizontal=5.dp,vertical=1.dp)
+                ){
+                    //다른 item을 가져옴에 유의
+                    items(dayUiState.records){record->
+                        Text(text=record.level.text)
+                    }
                 }
+            }else{
+                Text("이날은 기록이 없어요")
             }
+
         }
     }
 
