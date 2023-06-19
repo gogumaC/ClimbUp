@@ -54,6 +54,7 @@ import java.time.LocalDateTime
 import java.util.TimeZone
 
 
+
 @Composable
 internal fun HomeScreen(
     climbingRecViewModel: ClimbingRecordViewModel = viewModel()
@@ -194,12 +195,11 @@ private fun ClimbUpCalendar(
             .fillMaxWidth()
             .padding(top = 15.dp, start = 15.dp, end = 15.dp)
     ) {
-        DatePicker(
-            state = state,
-            showModeToggle = false,
-            headline = null,
-            title= null
 
+        com.gogumac.climbup.home.CustomCalendar.ClimbUpCalendar(
+            modifier=Modifier.padding(5.dp),
+            onDayClicked = {},
+            onMonthChanged = {}
         )
 
     }

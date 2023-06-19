@@ -6,4 +6,8 @@
     <string name="home4">가장 많이 시도한 레벨</string>
     <string name="records_today_climbing">오늘의 클라이밍 기록하기</string>
     <string name="detail">자세히</string>
+    <string name="title_activity_main2">MainActivity2</string>
+    <string name="level">level</string>
+    <string name="last_month_button">지난 달로 이동</string>
+    <string name="next_month_button">다음 달로 이동</string>
 </resources>
