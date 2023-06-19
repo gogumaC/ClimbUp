@@ -2,12 +2,15 @@ package com.gogumac.climbup.home
 
 import android.util.Log
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -15,6 +18,8 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
@@ -45,8 +50,11 @@ import com.gogumac.climbup.ClimbingRecordViewModel
 import com.gogumac.climbup.DayUiState
 import com.gogumac.climbup.MonthUiState
 import com.gogumac.climbup.R
+import com.gogumac.climbup.component.Levels.LevelIcon
 import com.gogumac.climbup.room.ClimbingRecord
 import com.gogumac.climbup.ui.theme.ClimbUpTheme
+import com.kizitonwose.calendar.core.CalendarDay
+import com.kizitonwose.calendar.core.CalendarMonth
 import kotlinx.coroutines.flow.StateFlow
 import java.time.Instant
 import java.time.LocalDate
@@ -60,10 +68,13 @@ internal fun HomeScreen(
     climbingRecViewModel: ClimbingRecordViewModel = viewModel()
 ){
 
-    val onDateSelected:(Long?)->Unit={
-        climbingRecViewModel.getDayRecords(it)
+    val onDateSelected:(CalendarDay)->Unit={
+        climbingRecViewModel.getDayRecords(it.date)
     }
-    val onMonthChanged:(Long?)->Unit={/*TODO()*/}
+    val onMonthChanged:(CalendarMonth)->Unit={
+        Log.d("CHECKFOR","ui "+it.yearMonth.toString())
+        climbingRecViewModel.getMonthRecords(it.yearMonth)
+    }
     HomeScreen(
         dayUiStateFlow=climbingRecViewModel.dayUiState,
         monthUiStateFlow = climbingRecViewModel.monthUiState,
@@ -77,8 +88,8 @@ private fun HomeScreen(
     modifier: Modifier = Modifier,
     dayUiStateFlow: StateFlow<DayUiState>?=null,
     monthUiStateFlow: StateFlow<MonthUiState>?=null,
-    onDateSelected:(Long?)->Unit={},
-    onMonthChanged:(Long?)->Unit={}
+    onDateSelected:(CalendarDay)->Unit={},
+    onMonthChanged:(CalendarMonth)->Unit={}
 ){
 
 
@@ -89,23 +100,31 @@ private fun HomeScreen(
 //                climbingRecViewModel.getDayRecords(date)
 //            }
         Surface(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
 
             Scaffold(
                 modifier=modifier,
-                topBar = {HomeTopAppbar()}
+                topBar = {HomeTopAppbar()},
             ){paddingValues ->
-                Column(modifier= Modifier.padding(paddingValues)) {
+                Column(
+                    modifier= Modifier
+                        .padding(paddingValues)
+                        .verticalScroll(rememberScrollState())
+
+                ) {
                     Summary()
                     ClimbUpCalendar(
                         onDateSelected=onDateSelected,
-                        onMonthChanged = {},
+                        onMonthChanged =onMonthChanged,
                         monthUiStateFlow=monthUiStateFlow
                     )
                     if(dayUiStateFlow!=null){
-                        ClimbingRecord(dayUiStateFlow = dayUiStateFlow)
+                        ClimbingRecord(
+                            dayUiStateFlow = dayUiStateFlow
+                        )
                     }
 
                 }
@@ -176,20 +195,16 @@ private fun Summary(modifier: Modifier = Modifier){
     }
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ClimbUpCalendar(
     modifier: Modifier = Modifier,
-    onDateSelected:(Long?)->Unit={},
-    onMonthChanged:(LocalDate)->Unit={},
+    onDateSelected:(CalendarDay)->Unit={},
+    onMonthChanged:(CalendarMonth)->Unit={},
     monthUiStateFlow: StateFlow<MonthUiState>?
 ){
 
     val monthUiState=monthUiStateFlow?.collectAsState()
 
-    val state = rememberDatePickerState()
-    onDateSelected(state.selectedDateMillis)
     BasicCard(
         modifier= modifier
             .fillMaxWidth()
@@ -198,8 +213,9 @@ private fun ClimbUpCalendar(
 
         com.gogumac.climbup.home.CustomCalendar.ClimbUpCalendar(
             modifier=Modifier.padding(5.dp),
-            onDayClicked = {},
-            onMonthChanged = {}
+            onDayClicked = { onDateSelected(it) },
+            onMonthChanged = { onMonthChanged(it) },
+            records = monthUiState?.value?.recordExistList?:setOf()
         )
 
     }
@@ -214,10 +230,10 @@ private fun ClimbingRecord(
 
     val dayUiState=dayUiStateFlow.collectAsState().value
     Column(
-        modifier=modifier.padding( start = 15.dp, end = 15.dp)
+        modifier=modifier.padding( vertical=10.dp, horizontal = 15.dp)
     ) {
         Row(
-            modifier= modifier
+            modifier= Modifier
                 .fillMaxWidth()
                 .padding(bottom = 5.dp),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -228,7 +244,7 @@ private fun ClimbingRecord(
                 modifier= Modifier.align(Alignment.Bottom)
             )
             TextButton(
-                modifier = modifier
+                modifier = Modifier
                     .wrapContentWidth()
                     .wrapContentHeight()
                     .align(Alignment.Bottom),
@@ -238,12 +254,12 @@ private fun ClimbingRecord(
             ) {
                 Text(
                     stringResource(id = R.string.detail),
-                    modifier=modifier.align(Alignment.Bottom)
+                    modifier=Modifier.align(Alignment.Bottom)
                 )
             }
         }
         BasicCard(
-            modifier=modifier.fillMaxWidth()
+            modifier=Modifier.fillMaxWidth(),
         ) {
             if(!dayUiState.isEmpty){
                 LazyVerticalGrid(

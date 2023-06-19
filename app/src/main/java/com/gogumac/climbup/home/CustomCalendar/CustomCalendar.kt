@@ -60,7 +60,7 @@ fun ClimbUpCalendar(
     modifier: Modifier=Modifier,
     onDayClicked:(CalendarDay)->Unit,
     onMonthChanged:(CalendarMonth)->Unit,
-    records:List<LocalDate> =listOf(LocalDate.now())
+    records:Set<LocalDate> =setOf(LocalDate.now())
 ){
 
     val currentMonth = remember{ YearMonth.now()}
@@ -86,13 +86,7 @@ fun ClimbUpCalendar(
         //state.scrollToMonth(it) TODO
     }
 
-
-
-
-    state.firstVisibleMonth.apply{
-        onMonthChanged(this)
-    }
-
+    onMonthChanged(state.firstVisibleMonth)
 
 
     Column(modifier=modifier) {

@@ -6,6 +6,9 @@ import androidx.lifecycle.ViewModel
 import com.gogumac.climbup.room.ClimbingRecord
 import com.gogumac.climbup.room.DBManager.db
 import com.gogumac.climbup.utils.SimpleCalendar
+import com.kizitonwose.calendar.core.CalendarDay
+import com.kizitonwose.calendar.core.CalendarMonth
+import com.kizitonwose.calendar.core.atStartOfMonth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,6 +16,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.YearMonth
 import java.util.TimeZone
 
 class ClimbingRecordViewModel:ViewModel() {
@@ -33,21 +37,16 @@ class ClimbingRecordViewModel:ViewModel() {
     init{
         testAdd()
         val today=LocalDateTime.now()
-        getDayRecords(today.year,today.month.value-1,today.dayOfMonth)
-        getMonthRecords(today.year,today.month.value-1)
+        //getDayRecords(today.year,today.month.value-1,today.dayOfMonth)
+        getDayRecords(LocalDate.now())
+
     }
 
-    fun getDayRecords(timeStamp:Long?){
 
+    fun getDayRecords(day: LocalDate){
         val run = Runnable {
             //여기에서 디비관련 작업
-            Log.d("DATEDATE",timeStamp.toString())
-            val dayStart:LocalDateTime=
-                if(timeStamp==null) LocalDate.now().atStartOfDay()
-                else LocalDateTime.ofInstant(
-                    Instant.ofEpochMilli(timeStamp),
-                    TimeZone.getDefault().toZoneId()
-                )
+            val dayStart:LocalDateTime=day.atStartOfDay()
             val dayEnd=dayStart.getDayEnd()
 
             Log.d("DATEDATE","$dayStart  $dayEnd")
@@ -60,34 +59,18 @@ class ClimbingRecordViewModel:ViewModel() {
         }
         val thread = Thread(run)
         thread.start()
-
     }
-    fun getDayRecords(year:Int,month:Int,day:Int){
-        val run = Runnable {
-            //여기에서 디비관련 작업
-            val dayStart=SimpleCalendar.generateLocalDateTime(year,month+1,day)
-            val dayEnd=SimpleCalendar.generateLocalDateTime(year,month+1,day,SimpleCalendar.DAY_FINISH)
-            val files=recordDao.getDayRecords(dayStart,dayEnd)
-            val dateString=dayStart.toLocalDate().toString()
-            _dayUiState.value=DayUiState(dateString, files).apply{
-                this.isEmpty=files.isEmpty()
-            }
 
-        }
-        val thread = Thread(run)
-        thread.start()
 
-    }
-//    fun getMonthRecords(date:CalendarDay){
-//        getMonthRecords(date.year,date.month)
-//    }
-    fun getMonthRecords(year:Int,month:Int){
+
+
+    fun getMonthRecords(yearMonth: YearMonth){
+        Log.d("CHECKFOR","viewModel "+yearMonth.toString())
         val run = Runnable {
-            //여기에서 디비관련 작업
-            val dayStart=SimpleCalendar.generateLocalDateTime(year,month+1,1)
-            val dayEnd=dayStart.getLastDayOfMonth()
-            val recordDays=recordDao.getDayRecords(dayStart,dayEnd).map{
-                it.date.toLocalDate().dayOfMonth
+            val monthStart=yearMonth.atStartOfMonth().atStartOfDay()
+            val monthEnd=yearMonth.atEndOfMonth().atStartOfDay().getDayEnd()
+            val recordDays=recordDao.getDayRecords(monthStart,monthEnd).map{
+                it.date.toLocalDate()
             }.toSet()
 
             _monthUiState.value=MonthUiState(recordDays).apply{
@@ -126,4 +109,4 @@ class ClimbingRecordViewModel:ViewModel() {
 }
 
 data class DayUiState(val date:String="", val records:List<ClimbingRecord> = listOf()):BaseUiState()
-data class MonthUiState(val records:Set<Int> =setOf()):BaseUiState()
+data class MonthUiState(val recordExistList:Set<LocalDate> = setOf()):BaseUiState()
