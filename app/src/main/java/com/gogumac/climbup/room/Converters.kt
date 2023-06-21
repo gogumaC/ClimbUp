@@ -25,12 +25,14 @@ class Converters {
 
     @TypeConverter
     fun fromLevel(level: Level):String{
-        return level.text
+        return level.text+" "+level.level+" "+level.color.toString()
     }
 
     @TypeConverter
-    fun toLevel(level:String):Level{
-        return Level(level)
+    fun toLevel(value:String):Level{
+
+        val (text,level,color)= value.split(" ")
+        return Level(text,level.toInt(),color.toULong())
     }
 
 
