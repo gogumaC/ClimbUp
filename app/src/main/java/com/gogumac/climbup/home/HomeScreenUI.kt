@@ -15,9 +15,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -26,6 +28,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerState
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -48,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gogumac.climbup.ClimbingRecordViewModel
 import com.gogumac.climbup.DayUiState
+import com.gogumac.climbup.Level
 import com.gogumac.climbup.MonthUiState
 import com.gogumac.climbup.R
 import com.gogumac.climbup.component.Levels.LevelIcon
@@ -182,7 +186,11 @@ private fun Summary(modifier: Modifier = Modifier){
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(stringResource(R.string.home4),modifier= Modifier.padding(end=10.dp))
-                LevelIcon(modifier= Modifier.size(18.dp))
+                LevelIcon(
+                    //modifier= Modifier,
+                    level= Level.testLevel,//TODO,
+                    size=18.dp
+                )
             }
             ElevatedButton(
                 onClick = {  },
@@ -261,19 +269,13 @@ private fun ClimbingRecord(
         BasicCard(
             modifier=Modifier.fillMaxWidth(),
         ) {
+
+            val contentHeight= Modifier.heightIn(min=50.dp,max=200.dp)
             if(!dayUiState.isEmpty){
-                LazyVerticalGrid(
-                    modifier=modifier.padding(3.dp),
-                    columns = GridCells.Adaptive(minSize=45.dp),
-                    contentPadding= PaddingValues(horizontal=5.dp,vertical=1.dp)
-                ){
-                    //다른 item을 가져옴에 유의
-                    items(dayUiState.records){record->
-                        Text(text=record.level.text)
-                    }
-                }
+                ClimbingRecordContent(dayUiState = dayUiState)
+
             }else{
-                Text("이날은 기록이 없어요")
+                ClimbingRecordEmpty()
             }
 
         }
@@ -281,17 +283,53 @@ private fun ClimbingRecord(
 
 }
 
-
 @Composable
-private fun LevelIcon(modifier: Modifier = Modifier){
-    Canvas(
-        modifier=modifier
-    ){
-        drawCircle(
-            color= Color.Cyan,
-        )
+fun ClimbingRecordContent(dayUiState:DayUiState){
+    val contentHeight= Modifier.heightIn(min=50.dp,max=200.dp)
+    Column(){
+        Text(text="운동 시간 : 13:00~15:00")
+        Text(text="클라이밍 횟수 : 17회")
+        Text(text="완등 횟수 : 15회")
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            //Text(text="기록")
+            Divider()
+        }
+
+//        LazyColumn(){
+//            items(dayUiState.records) {record->
+//                Row {
+//                    LevelIcon(level= Level.testLevel)
+//                    Text(text="5/10")
+//
+//                }
+//            }
+//        }
+        LazyVerticalGrid(
+            modifier=contentHeight
+                .padding(3.dp),
+            columns = GridCells.Fixed(10),
+            //columns = GridCells.Adaptive(minSize=45.dp),
+            contentPadding= PaddingValues(horizontal=10.dp,vertical=10.dp),
+            ){
+            //다른 item을 가져옴에 유의
+            items(dayUiState.records){record->
+                LevelIcon(level=record.level)
+                //Text(text=record.level.text)
+            }
+        }
     }
 }
+
+@Composable
+fun ClimbingRecordEmpty(){
+    val contentHeight= Modifier.heightIn(min=50.dp,max=200.dp)
+    Text(
+        modifier=contentHeight,
+        text="이날은 기록이 없어요"
+    )
+}
+
+
 
 @Preview
 @Composable
@@ -302,6 +340,15 @@ private fun HomeScreenPreview(){
         HomeScreen(modifier = Modifier)
     }
 
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ClimbingRecordPreView(){
+    ClimbUpTheme(
+    ) {
+        ClimbingRecordContent(dayUiState = DayUiState("22",List(5){ClimbingRecord(date= LocalDateTime.now(), level = Level.testLevel)}))
+    }
 }
 
 

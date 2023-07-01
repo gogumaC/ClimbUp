@@ -85,7 +85,7 @@ class ClimbingRecordViewModel:ViewModel() {
     fun testAdd(){
         val run = Runnable {
             //여기에서 디비관련 작업
-            recordDao.add(ClimbingRecord(date = LocalDateTime.now(),level=Level("default")))
+            recordDao.add(ClimbingRecord(date = LocalDateTime.now(),level=Level.testLevel))
 
         }
         val thread = Thread(run)
